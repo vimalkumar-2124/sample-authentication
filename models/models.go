@@ -29,8 +29,15 @@ type SignUpBody struct {
 }
 
 type Session struct {
-	ID      primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Email   string             `json:"email" bson:"email"`
-	Expiry  time.Time          `json:"expiryAt" bson:"expiryAt"`
-	Created time.Time          `json:"createdAt" bson:"createdAt"`
+	ID          primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Email       string             `json:"email" bson:"email"`
+	Expiry      time.Time          `json:"expiryAt" bson:"expiryAt"`
+	Created     time.Time          `json:"createdAt" bson:"createdAt"`
+	TokenString string             `json:"token" bson:"token"`
+}
+
+type ChangeUserPassword struct {
+	Email        string `json:"email"`
+	Old_Password string `json:"old_pass"`
+	New_Password string `json:"new_pass"`
 }

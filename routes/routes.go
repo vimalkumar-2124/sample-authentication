@@ -31,8 +31,10 @@ func (u *UserRoutes) SignIn(c *gin.Context) {
 	token, err := u.UserService.SignIn(body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
+		return
 	}
 	c.JSON(200, gin.H{"message": "Signed In successfully", "token": token})
+	return
 }
 
 func (u *UserRoutes) SignUp(c *gin.Context) {
@@ -41,12 +43,21 @@ func (u *UserRoutes) SignUp(c *gin.Context) {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
-	token, err := u.UserService.SignUp(body)
+	// token, err := u.UserService.SignUp(body)
+	// if err != nil {
+	// 	c.JSON(400, gin.H{"message": err.Error()})
+	// 	return
+	// }
+	// c.JSON(200, gin.H{"message": "Signed Up", "token": token})
+
+	result, err := u.UserService.SignUp(body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Signed Up", "token": token})
+	// c.JSON(200, gin.H{"message": "Signed Up", "token": token})
+	c.JSON(200, gin.H{"message": result})
+	return
 
 }
 
@@ -59,4 +70,19 @@ func (u *UserRoutes) LogOut(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"message": "Logged Out"})
+}
+
+func (u *UserRoutes) ChangePassword(c *gin.Context) {
+	var body models.ChangeUserPassword
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+	err := u.UserService.ChangePassword(body)
+	if err != nil {
+		c.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Password changed successfully"})
+	return
 }

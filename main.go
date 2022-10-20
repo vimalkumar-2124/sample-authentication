@@ -14,6 +14,8 @@ import (
 
 // Middleware function
 func ValidateAuth(userRepo repositories.UserRepo) gin.HandlerFunc {
+
+	// TODO : Yet to implemet JWT auth
 	return func(c *gin.Context) {
 		authToken := c.Request.Header.Get("Authorization")
 		if authToken == "" {
@@ -64,6 +66,7 @@ func main() {
 	{
 		userApI.POST("/signin", userHandler.SignIn)
 		userApI.POST("/signup", userHandler.SignUp)
+		userApI.POST("/change-password", userHandler.ChangePassword)
 		userApI.POST("/logout", ValidateAuth(userRepo), userHandler.LogOut)
 	}
 

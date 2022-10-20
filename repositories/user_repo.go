@@ -6,7 +6,6 @@ import (
 
 	"github.com/vimalkumar-2124/sample-authentication/models"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -44,22 +43,30 @@ func (u *UserRepo) GetUserByEmail(email string) (bool, models.Users, error) {
 	return true, users, nil
 }
 
-func (u *UserRepo) SaveSession(session models.Session) (string, error) {
-	insertResult, err := u.db.Collection("sessions").InsertOne(context.TODO(), session)
+// func (u *UserRepo) SaveSession(session models.Session) (string, error) {
+// 	insertResult, err := u.db.Collection("sessions").InsertOne(context.TODO(), session)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return insertResult.InsertedID.(primitive.ObjectID).Hex(), nil
+// }
+
+func (u *UserRepo) SaveSession(session models.Session) error {
+	_, err := u.db.Collection("sessions").InsertOne(context.TODO(), session)
 	if err != nil {
-		return "", err
+		return err
 	}
-	return insertResult.InsertedID.(primitive.ObjectID).Hex(), nil
+	return nil
 }
 
 func (u *UserRepo) GetSessinById(token string) (bool, models.Session, error) {
-	docId, err := primitive.ObjectIDFromHex(token)
-	if err != nil {
-		return false, models.Session{}, err
-	}
+	// docId, err := primitive.ObjectIDFromHex(token)
+	// if err != nil {
+	// 	return false, models.Session{}, err
+	// }
 	var session models.Session
 	filter := bson.M{
-		"_id": docId,
+		"token": token,
 		"expiryAt": bson.M{
 			"$gte": time.Now(),
 		},
@@ -80,13 +87,27 @@ func (u *UserRepo) GetSessinById(token string) (bool, models.Session, error) {
 }
 
 func (u *UserRepo) MarkSessionAsExpired(authToken string) error {
-	docId, err := primitive.ObjectIDFromHex(authToken)
+	// docId, err := primitive.ObjectIDFromHex(authToken)
+	// if err != nil {
+	// 	return err
+	// }
+	filter := bson.M{"token": authToken}
+	update := bson.M{"$set": bson.M{"expiryAt": time.Now()}}
+	_, err := u.db.Collection("sessions").UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
 	}
-	filter := bson.M{"_id": docId}
-	update := bson.M{"$set": bson.M{"expiryAt": time.Now()}}
-	_, err = u.db.Collection("sessions").UpdateOne(context.TODO(), filter, update)
+	return nil
+}
+
+func (u *UserRepo) UpdateUser(user models.SignInBody) error {
+	// docId, err := primitive.ObjectIDFromHex(authToken)
+	// if err != nil {
+	// 	return err
+	// }
+	filter := bson.M{"email": user.Email}
+	update := bson.M{"$set": bson.M{"password": user.Password}}
+	_, err := u.db.Collection("auth").UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
 	}

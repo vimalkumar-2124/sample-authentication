@@ -7,6 +7,8 @@ import (
 
 	"github.com/vimalkumar-2124/sample-authentication/models"
 	"github.com/vimalkumar-2124/sample-authentication/repositories"
+	"github.com/vimalkumar-2124/sample-authentication/tokens"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,6 +22,7 @@ type UserServiceRoutes interface {
 	GetEncryptedPassword(password string) string    // Password encrypt
 	CompareHashPassword(password, hash string) bool // Compare encrypt password while signin
 	LogOut(authToken string) error
+	ChangePassword(body models.ChangeUserPassword) error
 }
 
 func NewInstanceOfUserService(userRepo repositories.UserRepo) UserService {
@@ -50,16 +53,22 @@ func (u *UserService) signIn(email string, password string) (string, error) {
 		return "", errors.New("error : Password not matched")
 	}
 
+	token, err := tokens.GenerateJWT(email)
+	if err != nil {
+		return "", err
+	}
+
 	// Create Session
 	now := time.Now()
 	expiryDate := now.AddDate(0, 0, 1)
 	newSession := models.Session{
-		Email:   email,
-		Created: now,
-		Expiry:  expiryDate,
+		Email:       email,
+		Created:     now,
+		Expiry:      expiryDate,
+		TokenString: token,
 	}
 
-	token, err := u.userRepo.SaveSession(newSession)
+	err = u.userRepo.SaveSession(newSession)
 	if err != nil {
 		return "", err
 	}
@@ -92,7 +101,8 @@ func (u *UserService) SignUp(body models.SignUpBody) (string, error) {
 	}
 
 	// Sign in user
-	return u.signIn(emailTrim, body.Password)
+	// return u.signIn(emailTrim, body.Password)
+	return "User signed up successfully!!", nil
 }
 
 func (u *UserService) LogOut(authToken string) error {
@@ -112,4 +122,32 @@ func (u *UserService) LogOut(authToken string) error {
 		return err
 	}
 	return nil
+}
+
+func (u *UserService) ChangePassword(body models.ChangeUserPassword) error {
+	found, user, err := u.userRepo.GetUserByEmail(body.Email)
+	if err != nil {
+		return err
+	}
+	if found {
+		match := u.CompareHashPassword(user.Password, body.Old_Password)
+		if match {
+			new_pass := u.GetEncryptedPassword(body.New_Password)
+			updatedUserPassword := models.SignInBody{
+				Email:    user.Email,
+				Password: new_pass,
+			}
+			err = u.userRepo.UpdateUser(updatedUserPassword)
+			if err != nil {
+				return err
+			}
+			return nil
+		} else {
+			return errors.New("Password is not matched")
+		}
+
+	} else {
+		return errors.New("User not found!!!")
+	}
+	// return nil
 }
