@@ -21,20 +21,20 @@ func NewInstanceOfUserRoutes(userService services.UserService) *UserRoutes {
 func (u *UserRoutes) SignIn(c *gin.Context) {
 	var body models.SignInBody
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
 	v := validator.New()
 	if err := v.Struct(body); err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
 	token, err := u.UserService.SignIn(body)
 	if err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Signed In successfully", "token": token})
+	c.JSON(200, gin.H{"statusCode": 200, "message": "Signed In successfully", "jwtToken": token})
 	return
 }
 
@@ -53,11 +53,11 @@ func (u *UserRoutes) SignUp(c *gin.Context) {
 
 	result, err := u.UserService.SignUp(body)
 	if err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
 	// c.JSON(200, gin.H{"message": "Signed Up", "token": token})
-	c.JSON(200, gin.H{"message": result})
+	c.JSON(201, gin.H{"statusCode": 201, "message": result})
 	return
 
 }
@@ -67,10 +67,10 @@ func (u *UserRoutes) LogOut(c *gin.Context) {
 	authToken = strings.ReplaceAll(authToken, "Bearer ", "")
 	err := u.UserService.LogOut(authToken)
 	if err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Logged Out"})
+	c.JSON(200, gin.H{"statusCode": 200, "message": "Logged Out"})
 }
 
 // func (u *UserRoutes) ChangePassword(c *gin.Context) {
@@ -93,15 +93,15 @@ func (u *UserRoutes) ChangePassword(c *gin.Context) {
 	// log.Println("ID : ", id)
 	var body models.ChangeUserPassword
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
 	err := u.UserService.ChangePassword(body, id)
 	if err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Password changed successfully"})
+	c.JSON(200, gin.H{"statusCode": 200, "message": "Password changed successfully"})
 	return
 }
 
@@ -109,10 +109,10 @@ func (u *UserRoutes) AllUsers(c *gin.Context) {
 	log.Println("All user route started...")
 	allUser, err := u.UserService.AllUser()
 	if err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+		c.JSON(400, gin.H{"statusCode": 400, "message": err.Error()})
 		return
 	}
 	log.Println("All user route completed...")
-	c.JSON(200, gin.H{"message": "List of users", "data": allUser})
+	c.JSON(200, gin.H{"statusCode": 200, "message": "List of users", "data": allUser})
 	return
 }

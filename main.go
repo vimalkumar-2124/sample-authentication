@@ -88,6 +88,22 @@ func ValidateAuth(userRepo repositories.UserRepo) gin.HandlerFunc {
 	}
 }
 
+// To avoid CORS error
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-control-allow-origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	}
+}
+
 func main() {
 	log.Println("Starting...")
 	dbName := "users"
@@ -109,8 +125,8 @@ func main() {
 	userHandler := routes.NewInstanceOfUserRoutes(userService)
 
 	router := gin.Default()
-
-	userApI := router.Group("/user")
+	router.Use(CORSMiddleware())
+	userApI := router.Group("/users")
 	{
 		userApI.GET("/all", AdminGuard(), TokenValidity(userRepo), userHandler.AllUsers)
 		userApI.POST("/signin", userHandler.SignIn)

@@ -54,7 +54,7 @@ func (u *UserService) signIn(email string, password string) (string, error) {
 	}
 	match := u.CompareHashPassword(user.Password, password)
 	if !match {
-		return "", errors.New("error : Password not matched")
+		return "", errors.New("Password not matched")
 	}
 
 	token, err := tokens.GenerateJWT(user.Role)
