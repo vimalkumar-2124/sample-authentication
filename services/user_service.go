@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"log"
 	"strings"
 	"time"
 
@@ -22,7 +23,9 @@ type UserServiceRoutes interface {
 	GetEncryptedPassword(password string) string    // Password encrypt
 	CompareHashPassword(password, hash string) bool // Compare encrypt password while signin
 	LogOut(authToken string) error
-	ChangePassword(body models.ChangeUserPassword) error
+	// ChangePassword(body models.ChangeUserPassword) error
+	ChangePassword(body models.ChangeUserPassword, id string) error
+	AllUser(body models.AllUser) error
 }
 
 func NewInstanceOfUserService(userRepo repositories.UserRepo) UserService {
@@ -30,7 +33,7 @@ func NewInstanceOfUserService(userRepo repositories.UserRepo) UserService {
 }
 
 func (u *UserService) GetEncryptedPassword(password string) string {
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 5)
+	bytes, _ := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes)
 }
 
@@ -38,6 +41,7 @@ func (u *UserService) CompareHashPassword(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
+
 func (u *UserService) signIn(email string, password string) (string, error) {
 
 	// Grab user
@@ -53,14 +57,14 @@ func (u *UserService) signIn(email string, password string) (string, error) {
 		return "", errors.New("error : Password not matched")
 	}
 
-	token, err := tokens.GenerateJWT(email)
+	token, err := tokens.GenerateJWT(user.Role)
 	if err != nil {
 		return "", err
 	}
 
 	// Create Session
 	now := time.Now()
-	expiryDate := now.AddDate(0, 0, 1)
+	expiryDate := now.AddDate(0, 0, 1).Unix()
 	newSession := models.Session{
 		Email:       email,
 		Created:     now,
@@ -86,6 +90,17 @@ func (u *UserService) SignUp(body models.SignUpBody) (string, error) {
 	emailTrim := strings.Trim(emailLowerCase, " ")
 	password := u.GetEncryptedPassword(body.Password)
 
+	// Check for user
+	userExist, err := u.userRepo.DoesUserExist(emailTrim)
+	if err != nil {
+		return "", err
+	}
+
+	if userExist {
+		// Just try signing them in
+		return u.signIn(emailTrim, body.Password)
+	}
+
 	// Sign Up user
 	newUser := models.Users{
 		Email:    emailTrim,
@@ -95,7 +110,7 @@ func (u *UserService) SignUp(body models.SignUpBody) (string, error) {
 		Mobile:   body.Mobile,
 		Created:  time.Now(),
 	}
-	err := u.userRepo.SaveUser(newUser)
+	err = u.userRepo.SaveUser(newUser)
 	if err != nil {
 		return "", err
 	}
@@ -124,8 +139,37 @@ func (u *UserService) LogOut(authToken string) error {
 	return nil
 }
 
-func (u *UserService) ChangePassword(body models.ChangeUserPassword) error {
-	found, user, err := u.userRepo.GetUserByEmail(body.Email)
+// func (u *UserService) ChangePassword(body models.ChangeUserPassword) error {
+// 	found, user, err := u.userRepo.GetUserByEmail(body.Email)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if found {
+// 		match := u.CompareHashPassword(user.Password, body.Old_Password)
+// 		if match {
+// 			new_pass := u.GetEncryptedPassword(body.New_Password)
+// 			updatedUserPassword := models.SignInBody{
+// 				Email:    user.Email,
+// 				Password: new_pass,
+// 			}
+// 			err = u.userRepo.UpdateUser(updatedUserPassword)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			return nil
+// 		} else {
+// 			return errors.New("Password is not matched")
+// 		}
+
+// 	} else {
+// 		return errors.New("User not found!!!")
+// 	}
+// 	// return nil
+// }
+
+// Added params passing
+func (u *UserService) ChangePassword(body models.ChangeUserPassword, id string) error {
+	found, user, err := u.userRepo.GetUserById(id)
 	if err != nil {
 		return err
 	}
@@ -150,4 +194,15 @@ func (u *UserService) ChangePassword(body models.ChangeUserPassword) error {
 		return errors.New("User not found!!!")
 	}
 	// return nil
+}
+
+func (u *UserService) AllUser() ([]models.AllUser, error) {
+	log.Println("All user service started...")
+	allUser, err := u.userRepo.ShowUsers()
+	if err != nil {
+		return []models.AllUser{}, err
+	}
+	log.Println("All user service completed...")
+	return allUser, nil
+
 }

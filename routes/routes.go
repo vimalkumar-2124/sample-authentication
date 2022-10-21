@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"log"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -72,17 +73,46 @@ func (u *UserRoutes) LogOut(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Logged Out"})
 }
 
+// func (u *UserRoutes) ChangePassword(c *gin.Context) {
+// 	var body models.ChangeUserPassword
+// 	if err := c.ShouldBindJSON(&body); err != nil {
+// 		c.JSON(400, gin.H{"message": err.Error()})
+// 		return
+// 	}
+// 	err := u.UserService.ChangePassword(body)
+// 	if err != nil {
+// 		c.JSON(400, gin.H{"message": err.Error()})
+// 		return
+// 	}
+// 	c.JSON(200, gin.H{"message": "Password changed successfully"})
+// 	return
+// }
+
 func (u *UserRoutes) ChangePassword(c *gin.Context) {
+	id := c.Param("id")
+	// log.Println("ID : ", id)
 	var body models.ChangeUserPassword
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
-	err := u.UserService.ChangePassword(body)
+	err := u.UserService.ChangePassword(body, id)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(200, gin.H{"message": "Password changed successfully"})
+	return
+}
+
+func (u *UserRoutes) AllUsers(c *gin.Context) {
+	log.Println("All user route started...")
+	allUser, err := u.UserService.AllUser()
+	if err != nil {
+		c.JSON(400, gin.H{"message": err.Error()})
+		return
+	}
+	log.Println("All user route completed...")
+	c.JSON(200, gin.H{"message": "List of users", "data": allUser})
 	return
 }
