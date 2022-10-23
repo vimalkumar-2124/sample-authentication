@@ -106,8 +106,8 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func main() {
 	log.Println("Starting...")
-	dbName := "users"
-	client, err := db.CreateDbConnection(dbName)
+	dbName := "sampleauth"
+	client, err := db.CreateDbConnection()
 	if err != nil {
 		log.Println("Failed to connect DB")
 		panic(err)
@@ -135,6 +135,6 @@ func main() {
 		userApI.POST("/logout", ValidateAuth(userRepo), userHandler.LogOut)
 	}
 
-	router.Run(":8000")
+	router.Run()
 
 }

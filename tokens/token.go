@@ -14,11 +14,11 @@ import (
 
 // Generate JSON Web Token
 func GenerateJWT(role string) (string, error) {
-	jwtKey := config.Config("SECRET")
+	jwtKey := config.EnvConfig("SECRET")
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["role"] = role
-	claims["exp"] = time.Now().Add(time.Minute * 1).Unix()
+	claims["exp"] = time.Now().Add(time.Minute * 15).Unix()
 	tokenInit := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := tokenInit.SignedString([]byte(jwtKey))
 	if err != nil {
@@ -45,7 +45,7 @@ func VerifyToken(r *http.Request) (*jwt.Token, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(config.Config("SECRET")), nil
+		return []byte(config.EnvConfig("SECRET")), nil
 
 	})
 	if err != nil {

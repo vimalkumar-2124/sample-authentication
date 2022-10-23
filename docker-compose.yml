@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  backend-go:
+    image: "vimal2124/sampleauth"
+    env_file:
+    - .env
+    ports:
+    - "${PORT}:${PORT}"
+
