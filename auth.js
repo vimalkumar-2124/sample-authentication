@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const secret = 'Plshdms%7s7dg'
+const secret = process.env.SECRET
 const saltRounds = 10
 
 const hashPassword = (password) => {
