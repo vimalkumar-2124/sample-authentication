@@ -1,6 +1,6 @@
 version: '3.8'
 services:
-  backend-go:
+  backend-node:
     image: "vimal2124/sampleauth-node"
     env_file:
     - .env
